@@ -1,6 +1,7 @@
 .carousel {
 	&-container {
-		width: 100%;
+		max-width: 1280px;
+		margin: 0 auto;
 	}
 	&-track {
 		width: 100%;
@@ -17,5 +18,10 @@
 		height: 532px;
 		background-color: #ccc;
 		border-radius: 20px;
+		&.active {
+			background-color: #fff;
+		}
 	}
+
+
 }

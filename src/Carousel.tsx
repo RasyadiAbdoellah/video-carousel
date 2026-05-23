@@ -44,8 +44,15 @@ type CarouselProps = {
 
 export default function Carousel({slides: slides}: CarouselProps) {
 
+	const N = slides.length
+	// Start with no left-side buffer — only the "current" copy and a right-side
+	// buffer copy are rendered, so nothing sits to the left of the first slide
+	// on first paint. The left buffer is added lazily on the first leftward nav.
 	const [offset, setOffset] = useState(0)
+	const [hasLeftBuffer, setHasLeftBuffer] = useState(false)
 	const [slideAnimDistance, setSlideAnimDistance] = useState(0)
+	const [animate, setAnimate] = useState(true)
+	const pendingLeftRef = useRef(false)
 
 
 	const containerRef = useRef<HTMLDivElement>(null)
@@ -76,15 +83,50 @@ export default function Carousel({slides: slides}: CarouselProps) {
 	}, [])
 
 	const handleArrowClick = useCallback((direction: 'left' | 'right') => {
-		if (direction === 'left') {
-			setOffset((prevIdx) => mod(prevIdx - 1, slides.length))
-
-		} else {
-			setOffset((prevIdx) => mod(prevIdx + 1, slides.length))
+		if (direction === 'left' && !hasLeftBuffer) {
+			// First-ever leftward nav: prepend a left-buffer copy, snap (no anim)
+			// to the equivalent position in the new middle copy, and queue the
+			// actual -1 step to run once the snap has painted.
+			setHasLeftBuffer(true)
+			setAnimate(false)
+			setOffset((prev) => prev + N)
+			pendingLeftRef.current = true
+			return
 		}
-	}, [slides])
+		setAnimate(true)
+		setOffset((prev) => prev + (direction === 'left' ? -1 : 1))
+	}, [hasLeftBuffer, N])
 
-	const paddedSlides = [...slides, ...slides]
+	// After the animated slide finishes, if we've drifted out of the "middle"
+	// region, silently snap back into it. The middle region is [0, N) when
+	// there's no left buffer, and [N, 2N) once the left buffer is added.
+	const handleTransitionEnd = useCallback(() => {
+		const base = hasLeftBuffer ? N : 0
+		if (offset < base || offset >= base + N) {
+			setAnimate(false)
+			setOffset(base + mod(offset, N))
+		}
+	}, [offset, N, hasLeftBuffer])
+
+	// Re-enable the transition the frame after a silent snap.
+	useEffect(() => {
+		if (animate) return
+		const id = requestAnimationFrame(() => setAnimate(true))
+		return () => cancelAnimationFrame(id)
+	}, [animate])
+
+	// Once animation is re-enabled, consume a queued leftward step (from the
+	// lazy left-buffer init) so the click feels like a single fluid move.
+	useEffect(() => {
+		if (!animate || !pendingLeftRef.current) return
+		pendingLeftRef.current = false
+		setOffset((prev) => prev - 1)
+	}, [animate])
+
+	const paddedSlides = hasLeftBuffer
+		? [...slides, ...slides, ...slides]
+		: [...slides, ...slides]
+	const activeIndex = mod(offset, N)
 
 	return (
 		<div className="carousel-container" ref={containerRef}>
@@ -96,12 +138,14 @@ export default function Carousel({slides: slides}: CarouselProps) {
 			</button>
 			<div className="carousel-track"
 					 ref={trackRef}
+					 onTransitionEnd={handleTransitionEnd}
 					 style={{
 						 transform: `translateX(-${offset * slideAnimDistance}px)`,
+						 transition: animate ? undefined : 'none',
 					 }}
 			>
 				{paddedSlides.map((slide, index) => (
-					<div className="carousel-slide" key={index} ref={index === 1 ? slideRef : index === offset ? activeSlideRef : undefined}>
+					<div className={`carousel-slide ${mod(index, N) === activeIndex ? "active": ""}`} key={index} ref={index === 1 ? slideRef : index === offset ? activeSlideRef : undefined}>
 						{slide}
 					</div>
 				))}
@@ -109,142 +153,3 @@ export default function Carousel({slides: slides}: CarouselProps) {
 		</div>
 	)
 }
-
-// const mod = (n: number, m: number) => ((n % m) + m) % m
-//
-// type CarouselProps = {
-// 	slides: ReactNode[]
-// }
-//
-// export default function Carousel({slides}: CarouselProps) {
-// 	const containerRef = useRef<HTMLDivElement>(null)
-// 	const trackRef = useRef<HTMLDivElement>(null)
-//
-// 	const [slideWidth, setSlideWidth] = useState(0)
-// 	const [peekPx, setPeekPx] = useState(0)
-//
-// 	const [offset, setOffset] = useState(0)
-// 	const [hasWrappedLeft, setHasWrappedLeft] = useState(false)
-// 	const [animate, setAnimate] = useState(true)
-// 	const transitioningRef = useRef(false)
-//
-// 	useEffect(() => {
-// 		const container = containerRef.current
-// 		if (!container) return
-//
-// 		const readMetrics = () => {
-// 			const styles = getComputedStyle(container)
-// 			const peek = parseFloat(styles.getPropertyValue('--carousel-peek')) || 0
-// 			setPeekPx(peek)
-// 			setSlideWidth(container.clientWidth - peek)
-// 		}
-//
-// 		readMetrics()
-// 		const ro = new ResizeObserver(readMetrics)
-// 		ro.observe(container)
-// 		return () => ro.disconnect()
-// 	}, [])
-//
-// 	useEffect(() => {
-// 		if (peekPx === 0 && hasWrappedLeft) setHasWrappedLeft(false)
-// 	}, [peekPx, hasWrappedLeft])
-//
-// 	const len = slides.length
-//
-// 	const leadingCloneCount = hasWrappedLeft && slideWidth > 0
-// 		? Math.ceil(peekPx / slideWidth) + 1
-// 		: 0
-//
-// 	const padded = useMemo(() => [
-// 		...slides.slice(len - leadingCloneCount),
-// 		...slides,
-// 		slides[0],
-// 	], [slides, len, leadingCloneCount])
-//
-// 	const effectivePeek = hasWrappedLeft ? peekPx : 0
-// 	const translatePx = -(offset + leadingCloneCount) * slideWidth + effectivePeek
-//
-// 	const activeIdx = mod(offset, len)
-//
-// 	const goLeft = useCallback(() => {
-// 		if (transitioningRef.current) return
-//
-// 		if (offset === 0 && !hasWrappedLeft) {
-// 			if (peekPx === 0) {
-// 				setAnimate(false)
-// 				setOffset(len - 1)
-// 				requestAnimationFrame(() => requestAnimationFrame(() => setAnimate(true)))
-// 				return
-// 			}
-// 			transitioningRef.current = true
-// 			setAnimate(false)
-// 			setHasWrappedLeft(true)
-// 			requestAnimationFrame(() => requestAnimationFrame(() => {
-// 				setAnimate(true)
-// 				setOffset(-1)
-// 			}))
-// 			return
-// 		}
-//
-// 		transitioningRef.current = true
-// 		setOffset(o => o - 1)
-// 	}, [offset, hasWrappedLeft, peekPx, len])
-//
-// 	const goRight = useCallback(() => {
-// 		if (transitioningRef.current) return
-// 		transitioningRef.current = true
-// 		setOffset(o => o + 1)
-// 	}, [])
-//
-// 	const onTransitionEnd = useCallback(() => {
-// 		transitioningRef.current = false
-// 		if (offset < 0 || offset >= len) {
-// 			setAnimate(false)
-// 			setOffset(mod(offset, len))
-// 			requestAnimationFrame(() => requestAnimationFrame(() => setAnimate(true)))
-// 		}
-// 	}, [offset, len])
-//
-// 	useEffect(() => {
-// 		const onKey = (e: KeyboardEvent) => {
-// 			if (e.key === 'ArrowLeft') goLeft()
-// 			else if (e.key === 'ArrowRight') goRight()
-// 		}
-// 		window.addEventListener('keydown', onKey)
-// 		return () => window.removeEventListener('keydown', onKey)
-// 	}, [goLeft, goRight])
-//
-// 	return (
-// 		<div className="carousel-container" ref={containerRef}>
-// 			<div className="carousel-control" onClick={goLeft}>&lt;</div>
-// 			<div className="carousel-control" onClick={goRight}>&gt;</div>
-// 			<div
-// 				className="carousel-track"
-// 				ref={trackRef}
-// 				onTransitionEnd={onTransitionEnd}
-// 				style={{
-// 					transform: `translateX(${translatePx}px)`,
-// 					transition: animate ? 'transform 300ms ease' : 'none',
-// 				}}
-// 			>
-// 				{padded.map((slide, i) => {
-// 					const sourceIdx = mod(i - leadingCloneCount, len)
-// 					const region =
-// 						i < leadingCloneCount ? 'lead'
-// 							: i >= leadingCloneCount + len ? 'trail'
-// 								: 'real'
-// 					const isActive = region === 'real' && sourceIdx === activeIdx
-// 					return (
-// 						<div
-// 							className="carousel-slide"
-// 							key={`${region}-${sourceIdx}`}
-// 							data-active={isActive}
-// 						>
-// 							{slide}
-// 						</div>
-// 					)
-// 				})}
-// 			</div>
-// 		</div>
-// 	)
-// }
