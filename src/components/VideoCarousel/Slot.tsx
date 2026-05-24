@@ -1,5 +1,5 @@
-import VideoSlide from "./VideoSlide"
-import type {VideoSrc} from "./VideoCarousel"
+import VideoSlide from "src/components/VideoCarousel/VideoSlide.tsx"
+import type {VideoSrc} from "src/components/VideoCarousel/VideoCarousel.tsx"
 
 type SlotProps = {
 	/** Slot position relative to the active slide (0 = active). */
@@ -17,9 +17,10 @@ type SlotProps = {
  */
 export default function Slot({position, left, preload, slide}: SlotProps) {
 	const isActive = position === 0
+	const isLeftBuffer = position === -1
 	return (
 		<div
-			className={`carousel-slide ${isActive ? 'active' : ''}`}
+			className={`carousel-slide ${isActive ? 'active' : ''} ${isLeftBuffer ? 'left-buffer' : ''}`}
 			style={{left: `${left}px`}}
 		>
 			<VideoSlide

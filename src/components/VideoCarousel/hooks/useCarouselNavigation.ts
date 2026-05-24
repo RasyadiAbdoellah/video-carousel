@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from "react"
-import {mod} from "../utils"
+import {mod} from "src/utils.ts"
 
 const BUFFER = 1
 
@@ -14,10 +14,13 @@ export type Slot = {
 
 /**
  * Encapsulates the carousel's navigation state machine: bounded `offset`,
- * in-flight animation step, lazy left-buffer expansion, and snap-back.
+ * in-flight animation step, lazy left-buffer expansion, snap-back, and the
+ * fade state for the left-buffer slot.
  *
- * Returns the inputs needed to render the track and react to its
- * `transitionend` event, plus a `navigate(direction)` action.
+ * Left navigation: slot -1 picks up a `fade-in` class so it pops in at
+ * opacity 0 and fades to 1 over 0.02s as the track slides into position.
+ * Right navigation: slot -1 picks up a `fade-out` class so it fades from 1
+ * to 0 over 0.02s as it slides off-screen left.
  */
 export function useCarouselNavigation(slideCount: number, visibleSlides: number) {
 	const N = slideCount
@@ -29,34 +32,37 @@ export function useCarouselNavigation(slideCount: number, visibleSlides: number)
 	// by `pendingMove` and reset to 0 (no animation).
 	const [pendingMove, setPendingMove] = useState(0)
 	const [animate, setAnimate] = useState(true)
-	// Lazy left buffer: until the user makes any navigation, slot -1 isn't
-	// rendered (so nothing sits left of the active slide on first paint).
+	// Once the user makes any navigation, slot -1 is rendered at rest. Until
+	// then, the first paint has nothing left of slide 0.
 	const [hasNavigated, setHasNavigated] = useState(false)
+	// 'in'  — slot -1 fades in (opacity 0 → 1) as it slides into active on a left click.
+	// 'out' — slot 0  fades out (opacity 1 → 0) as it slides off-screen on a right click.
+	const [fade, setFade] = useState<'in' | 'out' | null>(null)
 	const isAnimatingRef = useRef(false)
 
 	const navigate = useCallback((direction: Direction) => {
 		if (isAnimatingRef.current) return
 		isAnimatingRef.current = true
-		// Left click needs the left buffer expanded *before* the animation so
-		// slot -1 exists to slide into the active position. Right click defers
-		// expansion to onTransitionEnd to avoid the new left-side slot popping
-		// in to the left of the container during the animation.
-		if (direction === 'left' && !hasNavigated) setHasNavigated(true)
+
+		if (direction === 'left') {
+			setHasNavigated(true)
+			setFade('in')
+			setAnimate(true)
+			setPendingMove(-1)
+			return
+		}
+
+		setFade('out')
 		setAnimate(true)
-		setPendingMove(direction === 'right' ? 1 : -1)
-	}, [hasNavigated])
+		setPendingMove(1)
+	}, [])
 
 	const onTransitionEnd = useCallback(() => {
 		if (pendingMove === 0) return
-		// Snap the track back to translateX(0) without animation. Each slot's
-		// content shifts by one slide, but at the moment of snap every slide is
-		// at the same viewport position it occupied a frame ago — no visible jump.
 		setAnimate(false)
 		setOffset((prev) => mod(prev + pendingMove, N))
 		setPendingMove(0)
-		// Right-click's deferred buffer expansion. The new left slot lands at
-		// position -stride (off-screen of the active spot), so it appears here
-		// without being visible mid-animation.
+		setFade(null)
 		if (!hasNavigated) setHasNavigated(true)
 		isAnimatingRef.current = false
 	}, [pendingMove, N, hasNavigated])
@@ -77,5 +83,5 @@ export function useCarouselNavigation(slideCount: number, visibleSlides: number)
 		return out
 	}, [hasNavigated, visibleSlides, offset, N])
 
-	return {pendingMove, animate, slots, navigate, onTransitionEnd}
+	return {pendingMove, animate, fade, slots, navigate, onTransitionEnd}
 }

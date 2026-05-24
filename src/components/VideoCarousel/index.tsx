@@ -1,8 +1,8 @@
 import {useRef} from "react"
-import Slot from "./Slot"
-import {useCarouselMeasure} from "../hooks/useCarouselMeasure"
-import {useCarouselNavigation} from "../hooks/useCarouselNavigation"
-import {VideoSoundProvider} from "../contexts/VideoSoundContext"
+import Slot from "./Slot.tsx"
+import {useCarouselMeasure} from "./hooks/useCarouselMeasure.ts"
+import {useCarouselNavigation} from "./hooks/useCarouselNavigation.ts"
+import {VideoSoundProvider} from "./contexts/VideoSoundContext.tsx"
 
 export type VideoSrc = {
 	posterSrc: string
@@ -42,8 +42,10 @@ type CarouselProps = {
 function VideoCarouselContent({slides}: CarouselProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const {stride, visibleSlides} = useCarouselMeasure(containerRef)
-	const {pendingMove, animate, slots, navigate, onTransitionEnd} =
+	const {pendingMove, animate, fade, slots, navigate, onTransitionEnd} =
 		useCarouselNavigation(slides.length, visibleSlides)
+
+	const trackClass = `carousel-track ${fade === 'in' ? 'fade-in' : ''} ${fade === 'out' ? 'fade-out' : ''}`
 
 	return (
 		<div className="carousel-container" ref={containerRef}>
@@ -53,7 +55,7 @@ function VideoCarouselContent({slides}: CarouselProps) {
 			<button className="carousel-control" onClick={() => navigate('right')}>
 				&gt;
 			</button>
-			<div className="carousel-track"
+			<div className={trackClass}
 					 onTransitionEnd={onTransitionEnd}
 					 style={{
 						 transform: `translateX(${-pendingMove * stride}px)`,

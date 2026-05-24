@@ -10,6 +10,13 @@
 		width: 100%;
 		height: 532px;
 		transition: transform 0.5s ease-in-out;
+
+		&.fade-in .carousel-slide.left-buffer {
+			animation: slideFadeIn 0.5s forwards;
+		}
+		&.fade-out .carousel-slide.active {
+			animation: slideFadeOut 0.5s forwards;
+		}
 	}
 	&-slide {
 		position: absolute;
@@ -19,10 +26,23 @@
 		background-color: #ccc;
 		border-radius: 20px;
 		overflow: hidden;
+		&.left-buffer {
+			opacity: 0;
+		}
 		&.active {
 
 		}
 	}
+}
+
+@keyframes slideFadeIn {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+@keyframes slideFadeOut {
+	from { opacity: 1; }
+	to { opacity: 0; }
 }
 
 .video-slide {
