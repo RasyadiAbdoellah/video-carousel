@@ -13,14 +13,23 @@ export type Slot = {
 }
 
 /**
+ * Navigation lifecycle:
+ *   'idle'     — at rest, ready for the next click.
+ *   'sliding'  — the track is mid-transition after a click.
+ *   'snapping' — between transitionend and the rAF re-enable; CSS transition
+ *                is suppressed so the track can jump to translateX(0).
+ */
+type Phase = 'idle' | 'sliding' | 'snapping'
+
+/**
  * Encapsulates the carousel's navigation state machine: bounded `offset`,
  * in-flight animation step, lazy left-buffer expansion, snap-back, and the
- * fade state for the left-buffer slot.
+ * fade state for the active / left-buffer slots.
  *
  * Left navigation: slot -1 picks up a `fade-in` class so it pops in at
- * opacity 0 and fades to 1 over 0.02s as the track slides into position.
- * Right navigation: slot -1 picks up a `fade-out` class so it fades from 1
- * to 0 over 0.02s as it slides off-screen left.
+ * opacity 0 and fades to 1 as the track slides into position.
+ * Right navigation: slot 0 picks up a `fade-out` class so it fades from 1
+ * to 0 as it slides off-screen left.
  */
 export function useCarouselNavigation(slideCount: number, visibleSlides: number) {
 	const N = slideCount
@@ -31,48 +40,55 @@ export function useCarouselNavigation(slideCount: number, visibleSlides: number)
 	// animates by `-pendingMove * stride`; on transitionend we snap the offset
 	// by `pendingMove` and reset to 0 (no animation).
 	const [pendingMove, setPendingMove] = useState(0)
-	const [animate, setAnimate] = useState(true)
 	// Once the user makes any navigation, slot -1 is rendered at rest. Until
 	// then, the first paint has nothing left of slide 0.
 	const [hasNavigated, setHasNavigated] = useState(false)
 	// 'in'  — slot -1 fades in (opacity 0 → 1) as it slides into active on a left click.
 	// 'out' — slot 0  fades out (opacity 1 → 0) as it slides off-screen on a right click.
 	const [fade, setFade] = useState<'in' | 'out' | null>(null)
-	const isAnimatingRef = useRef(false)
+
+	const [phase, setPhase] = useState<Phase>('idle')
+	const phaseRef = useRef<Phase>('idle')
+
+	// Keep ref and state in lockstep. The ref is what `navigate` and
+	// `onTransitionEnd` read so they can gate synchronously, without waiting
+	// for React's next commit.
+	const setPhaseSync = useCallback((next: Phase) => {
+		phaseRef.current = next
+		setPhase(next)
+	}, [])
 
 	const navigate = useCallback((direction: Direction) => {
-		if (isAnimatingRef.current) return
-		isAnimatingRef.current = true
+		if (phaseRef.current !== 'idle') return
+		setPhaseSync('sliding')
 
 		if (direction === 'left') {
 			setHasNavigated(true)
 			setFade('in')
-			setAnimate(true)
 			setPendingMove(-1)
 			return
 		}
 
 		setFade('out')
-		setAnimate(true)
 		setPendingMove(1)
-	}, [])
+	}, [setPhaseSync])
 
 	const onTransitionEnd = useCallback(() => {
-		if (pendingMove === 0) return
-		setAnimate(false)
+		if (phaseRef.current !== 'sliding') return
+		setPhaseSync('snapping')
 		setOffset((prev) => mod(prev + pendingMove, N))
 		setPendingMove(0)
 		setFade(null)
 		if (!hasNavigated) setHasNavigated(true)
-		isAnimatingRef.current = false
-	}, [pendingMove, N, hasNavigated])
+	}, [pendingMove, N, hasNavigated, setPhaseSync])
 
-	// Re-enable animate the frame after a silent snap so the next click animates.
+	// Hold 'snapping' for one frame so the no-animation jump commits, then
+	// return to 'idle' for the next click.
 	useEffect(() => {
-		if (animate) return
-		const id = requestAnimationFrame(() => setAnimate(true))
+		if (phase !== 'snapping') return
+		const id = requestAnimationFrame(() => setPhaseSync('idle'))
 		return () => cancelAnimationFrame(id)
-	}, [animate])
+	}, [phase, setPhaseSync])
 
 	const slots = useMemo<Slot[]>(() => {
 		const leftBuffer = hasNavigated ? BUFFER : 0
@@ -82,6 +98,8 @@ export function useCarouselNavigation(slideCount: number, visibleSlides: number)
 		}
 		return out
 	}, [hasNavigated, visibleSlides, offset, N])
+
+	const animate = phase !== 'snapping'
 
 	return {pendingMove, animate, fade, slots, navigate, onTransitionEnd}
 }

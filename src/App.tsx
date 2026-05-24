@@ -1,4 +1,4 @@
-import VideoCarousel from "./components/VideoCarousel"
+import VideoCarousel from "src/components/VideoCarousel/VideoCarousel.tsx"
 import type {VideoSrc} from "src/types.ts"
 import "./index.scss"
 
