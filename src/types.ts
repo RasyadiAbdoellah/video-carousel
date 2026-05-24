@@ -10,4 +10,5 @@
 export type VideoSrc = {
 	posterSrc: string
 	videoSrc: string
+	text?: string
 }
