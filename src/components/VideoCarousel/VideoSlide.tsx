@@ -80,11 +80,11 @@ export default function VideoSlide({videoSrc, posterSrc, active = false, preload
 			)}
 			{active && (
 				<div className="video-slide__controls">
-					<button className="video-slide__btn" onClick={togglePlay} aria-label={isPlaying ? "Pause" : "Play"}>
-						{isPlaying ? "❚❚" : "▶"}
-					</button>
 					<button className="video-slide__btn" onClick={toggleSound} aria-label={isMuted ? "Unmute" : "Mute"}>
-						{isMuted ? "🔇" : "🔊"}
+						<img src={isMuted ? "/assets/icons/sound-off.svg" : "/assets/icons/sound-on.svg"} alt="" />
+					</button>
+					<button className="video-slide__btn" onClick={togglePlay} aria-label={isPlaying ? "Pause" : "Play"}>
+						<img src={isPlaying ? "/assets/icons/pause.svg" : "/assets/icons/play.svg"} alt="" />
 					</button>
 				</div>
 			)}
