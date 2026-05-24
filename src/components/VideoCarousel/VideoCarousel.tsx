@@ -2,7 +2,7 @@ import {useRef} from "react"
 import Slot from "./Slot.tsx"
 import {useCarouselMeasure} from "./hooks/useCarouselMeasure.ts"
 import {useCarouselNavigation} from "./hooks/useCarouselNavigation.ts"
-import {useTouchSwipe} from "./hooks/useTouchSwipe.ts"
+import {useTouchDrag} from "./hooks/useTouchDrag.ts"
 import {VideoSoundProvider} from "./contexts/VideoSoundContext.tsx"
 import type {VideoSrc} from "src/types.ts"
 
@@ -39,43 +39,40 @@ type CarouselProps = {
 function VideoCarouselContent({slides}: CarouselProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const {stride, visibleSlides} = useCarouselMeasure(containerRef)
-	const {
-		pendingMove,
-		animate,
-		fade,
-		slots,
-		navigate,
-		onTransitionEnd
-	} = useCarouselNavigation(slides.length, visibleSlides)
+	const {pendingMove, dragDelta, animate, fade, slots, navigate, startDrag, updateDrag, endDrag, onTransitionEnd} =
+		useCarouselNavigation(slides.length, visibleSlides, stride)
 
-	useTouchSwipe(containerRef, navigate)
+	useTouchDrag(containerRef, {startDrag, updateDrag, endDrag})
 
-	const trackClass = `carousel-track ${fade === 'in' ? 'fade-in' : ''} ${fade === 'out' ? 'fade-out' : ''}`
+	const trackClass = `carousel-track${fade === 'in' ? ' fade-in' : ''}${fade === 'out' ? ' fade-out' : ''}`
 
 	return (
-		<div className="carousel-container" ref={containerRef}>
+		<div className="carousel">
 			<button className="carousel-control" onClick={() => navigate('left')}>
 				&lt;
 			</button>
 			<button className="carousel-control" onClick={() => navigate('right')}>
 				&gt;
 			</button>
-			<div className={trackClass}
-					 onTransitionEnd={onTransitionEnd}
-					 style={{
-						 transform: `translateX(${-pendingMove * stride}px)`,
-						 transition: animate ? undefined : 'none',
-					 }}
-			>
-				{slots.map(({position, slideIndex}) => (
-					<Slot
-						key={slideIndex}
-						position={position}
-						left={position * stride}
-						preload={Math.abs(position) <= 1}
-						slide={slides[slideIndex]}
-					/>
-				))}
+
+			<div className="carousel-container" ref={containerRef}>
+				<div className={trackClass}
+						 onTransitionEnd={onTransitionEnd}
+						 style={{
+							 transform: `translateX(${-pendingMove * stride + dragDelta}px)`,
+							 transition: animate ? undefined : 'none',
+						 }}
+				>
+					{slots.map(({position, slideIndex}) => (
+						<Slot
+							key={slideIndex}
+							position={position}
+							left={position * stride}
+							preload={Math.abs(position) <= 1}
+							slide={slides[slideIndex]}
+						/>
+					))}
+				</div>
 			</div>
 		</div>
 	)
