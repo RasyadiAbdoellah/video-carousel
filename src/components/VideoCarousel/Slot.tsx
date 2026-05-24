@@ -1,5 +1,5 @@
-import VideoSlide from "src/components/VideoCarousel/VideoSlide.tsx"
-import type {VideoSrc} from "src/components/VideoCarousel/VideoCarousel.tsx"
+import VideoSlide from "./VideoSlide.tsx"
+import type {VideoSrc} from "src/types.ts"
 
 type SlotProps = {
 	/** Slot position relative to the active slide (0 = active). */

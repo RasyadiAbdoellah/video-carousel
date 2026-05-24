@@ -1,4 +1,5 @@
-import VideoCarousel, {type VideoSrc} from "./components/VideoCarousel"
+import VideoCarousel from "./components/VideoCarousel"
+import type {VideoSrc} from "src/types.ts"
 import "./index.scss"
 
 const videos: VideoSrc[] = [

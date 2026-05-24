@@ -3,11 +3,7 @@ import Slot from "./Slot.tsx"
 import {useCarouselMeasure} from "./hooks/useCarouselMeasure.ts"
 import {useCarouselNavigation} from "./hooks/useCarouselNavigation.ts"
 import {VideoSoundProvider} from "./contexts/VideoSoundContext.tsx"
-
-export type VideoSrc = {
-	posterSrc: string
-	videoSrc: string
-}
+import type {VideoSrc} from "src/types.ts"
 
 type CarouselProps = {
 	slides: VideoSrc[]
