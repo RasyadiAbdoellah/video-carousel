@@ -2,6 +2,7 @@ import {useRef} from "react"
 import Slot from "./Slot.tsx"
 import {useCarouselMeasure} from "./hooks/useCarouselMeasure.ts"
 import {useCarouselNavigation} from "./hooks/useCarouselNavigation.ts"
+import {useTouchSwipe} from "./hooks/useTouchSwipe.ts"
 import {VideoSoundProvider} from "./contexts/VideoSoundContext.tsx"
 import type {VideoSrc} from "src/types.ts"
 
@@ -38,8 +39,16 @@ type CarouselProps = {
 function VideoCarouselContent({slides}: CarouselProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const {stride, visibleSlides} = useCarouselMeasure(containerRef)
-	const {pendingMove, animate, fade, slots, navigate, onTransitionEnd} =
-		useCarouselNavigation(slides.length, visibleSlides)
+	const {
+		pendingMove,
+		animate,
+		fade,
+		slots,
+		navigate,
+		onTransitionEnd
+	} = useCarouselNavigation(slides.length, visibleSlides)
+
+	useTouchSwipe(containerRef, navigate)
 
 	const trackClass = `carousel-track ${fade === 'in' ? 'fade-in' : ''} ${fade === 'out' ? 'fade-out' : ''}`
 

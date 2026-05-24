@@ -6,6 +6,9 @@
 		--slide-gap: 20px;
 		max-width: 1280px;
 		margin: 0 auto;
+		// Let vertical scrolls through to the page but reserve horizontal
+		// gestures for the carousel itself.
+		touch-action: pan-y;
 	}
 	&-track {
 		position: relative;
