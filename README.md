@@ -1,73 +1,84 @@
-# React + TypeScript + Vite
+# Infinite Carousel
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A working video carousel with infinite scroll, built in React + TypeScript with Vite.
 
-Currently, two official plugins are available:
+The active slide is aligned to the container's left edge; the rest of the track overflows to the right. Slides are navigated one at a time via the left / right chevrons or by horizontal touch / pointer drag. The slide list wraps modulo N, so the carousel scrolls forever in both directions. There is no autoscroll.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+The active slide auto-plays its video and is the only slide that shows the video controls. Immediate neighbours pre-load their media so playback starts without delay once navigation completes.
 
-## React Compiler
+## Architecture
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The carousel is split into a generic mechanism (`Carousel`) and a video-specific consumer (`VideoCarousel`).
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+├── components/
+│   ├── Carousel/                # Generic, content-agnostic carousel
+│   │   ├── Carousel.tsx         # Generic over T; takes items + SlotComponent
+│   │   ├── CarouselSlot.tsx     # Positioned wrapper; delegates inner render to SlotComponent
+│   │   ├── style.scss           # .carousel, .carousel-track, .carousel-slot rules
+│   │   ├── hooks/
+│   │   │   ├── useCarouselMeasure.ts      # Reads CSS vars + observes container resizes
+│   │   │   ├── useCarouselNavigation.ts   # Navigation state, lazy buffer, snap-back
+│   │   │   └── useTouchDrag.ts            # Pointer-driven drag with direction lock
+│   │   └── utils/
+│   │       └── velocityTracker.ts         # Trailing px/ms velocity for drag release
+│   └── VideoCarousel/           # Video-specific wrapper around Carousel
+│       ├── VideoCarousel.tsx    # Wraps Carousel in VideoSoundProvider
+│       ├── VideoSlot.tsx        # Renders VideoPlayer + caption for each item
+│       ├── VideoPlayer.tsx      # <video> with play/pause + sound controls
+│       ├── style.scss           # .video-player, .video-slot rules
+│       └── contexts/
+│           └── VideoSoundContext.tsx      # Global muted/unmuted state
+├── styles/
+│   └── _variables.scss          # Shared SCSS variables
+├── reboot.scss                  # Global CSS reset
+└── index.scss                   # Imports reboot
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Generic `Carousel`
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+The carousel mechanism is independent of what each slide renders. It accepts an item array and a slot component:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```tsx
+type CarouselSlotProps<T> = {
+  item: T
+  isActive: boolean
+  position: number   // 0 = active, -1 = left buffer, etc.
+  preload: boolean   // active slide and its neighbours
+}
+
+<Carousel
+  items={items}
+  SlotComponent={MySlot}
+  title="Optional title"
+/>
 ```
+
+The render window is virtualised: only `visibleSlides + buffer` slots are in the DOM at any time, with their content rotating as the offset changes. The previously-active slide stays mounted one to the left so users can scroll back without a jump.
+
+### `VideoCarousel`
+
+A thin wrapper that supplies the video-specific concerns:
+
+```tsx
+<VideoSoundProvider>
+  <Carousel items={slides} SlotComponent={VideoSlot} title={title} />
+</VideoSoundProvider>
+```
+
+`VideoSlot` renders the `<video>` element inside a framed wrapper (`video-slot__frame`) that picks up an outline when its slot is active, plus an optional caption (`video-slot__caption`).
+
+## Scripts
+
+| Command         | What it does                            |
+| --------------- | --------------------------------------- |
+| `npm run dev`     | Start the Vite dev server with HMR.     |
+| `npm run build`   | Type-check (`tsc -b`) and produce a production build. |
+| `npm run preview` | Serve the production build locally.     |
+| `npm run lint`    | Run ESLint over the project.            |
+| `npm test`        | Run the Vitest suite.                   |
+
+## Not yet implemented
+
+- Keyboard arrow-key navigation
