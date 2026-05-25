@@ -94,7 +94,12 @@ Receives `{position, left, preload, item, SlotComponent}`. Renders only the oute
 </div>
 ```
 
-Because the generic carousel does not render `.carousel-slot__inner` or `.carousel-slot__text`, their styles do NOT live in `Carousel/style.scss`. They move to `VideoCarousel/style.scss` alongside the consumer that renders them. This preserves the current DOM where the caption sits OUTSIDE the outlined inner box (sibling of `__inner`, not child).
+The two non-generic elements (the outlined wrapper around the player and the caption below it) are renamed to a video-specific BEM block since `__inner` no longer makes sense inside a fragment:
+
+- `carousel-slot__inner` → `video-slot__frame`
+- `carousel-slot__text` → `video-slot__caption`
+
+Their styles live in `VideoCarousel/style.scss` alongside the `VideoSlot` consumer that renders them. The current DOM is preserved (caption sits OUTSIDE the outlined frame, as a sibling).
 
 ### `VideoCarousel/VideoCarousel.tsx`
 
@@ -114,10 +119,10 @@ export default function VideoCarousel({slides, title}: {slides: VideoSrc[]; titl
 function VideoSlot({item, isActive, preload}: CarouselSlotProps<VideoSrc>) {
   return (
     <>
-      <div className="carousel-slot__inner">
+      <div className="video-slot__frame">
         <VideoPlayer videoSrc={item.videoSrc} posterSrc={item.posterSrc} active={isActive} preload={preload} />
       </div>
-      <p className="carousel-slot__text">{item.text}</p>
+      <p className="video-slot__caption">{item.text}</p>
     </>
   )
 }
@@ -163,8 +168,8 @@ Contents moved from `src/index.scss`:
 
 .video-player { /* ...moved verbatim from index.scss... */ }
 
-.carousel-slot {
-  &__inner {
+.video-slot {
+  &__frame {
     border-radius: 20px;
     overflow: hidden;
     transition: border 0.2s ease-in-out, outline 0.2s ease-in-out;
@@ -178,7 +183,7 @@ Contents moved from `src/index.scss`:
       outline-offset: 4px;
     }
   }
-  &__text {
+  &__caption {
     margin-top: 12px;
     font-size: 14px;
     font-weight: 400;
@@ -188,7 +193,7 @@ Contents moved from `src/index.scss`:
 }
 ```
 
-Note: the `.active &` selector is rewritten as `.carousel-slot.active &` because the parent `.carousel-slot` selector no longer wraps `__inner` in this file. Behavior is identical — the outline appears on the active slot's inner box.
+Note: the active-state selector reaches up to the carousel-provided `.carousel-slot.active` class via `.carousel-slot.active &`. This is the one place where video styles depend on a class set by the generic carousel — acceptable because `.carousel-slot.active` is the documented signal for "this is the active slot."
 
 ### `src/index.scss` (after)
 
