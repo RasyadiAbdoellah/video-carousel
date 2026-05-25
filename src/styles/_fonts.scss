@@ -1,0 +1,19 @@
+// Larsseit family. Files live under /assets/Fonts/Larsseit/ (served from
+// `public/`). Only the weights actually used by the project are declared here;
+// add more @font-face blocks as new weights are needed.
+
+@font-face {
+	font-family: 'Larsseit';
+	src: url('/assets/fonts/Larsseit/Larsseit.otf') format('opentype');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Larsseit';
+	src: url('/assets/fonts/Larsseit/Larsseit-Bold.otf') format('opentype');
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
+}

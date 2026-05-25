@@ -79,6 +79,10 @@ A thin wrapper that supplies the video-specific concerns:
 | `npm run lint`    | Run ESLint over the project.            |
 | `npm test`        | Run the Vitest suite.                   |
 
+## Typography
+
+The project uses **Larsseit** (bundled under `public/assets/Fonts/Larsseit/`). The Figma wireframe uses a different typeface that we don't have access to, so Larsseit was chosen as the closest available match to the wireframe's visual character. Only the weights actually used (400, 700) are declared in `src/styles/_fonts.scss` to keep the initial payload small.
+
 ## Not yet implemented
 
 - Keyboard arrow-key navigation

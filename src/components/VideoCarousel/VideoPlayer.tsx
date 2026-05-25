@@ -1,6 +1,10 @@
 import {useEffect, useRef, useState} from "react"
 import {useVideoSound} from "./contexts/VideoSoundContext.tsx"
 import SquareBtn from "src/components/SquareBtn/SquareBtn.tsx"
+import PlayIcon from "src/components/icons/PlayIcon.tsx"
+import PauseIcon from "src/components/icons/PauseIcon.tsx"
+import SoundOnIcon from "src/components/icons/SoundOnIcon.tsx"
+import SoundOffIcon from "src/components/icons/SoundOffIcon.tsx"
 import styles from "./VideoCarousel.module.scss"
 
 /**
@@ -48,8 +52,12 @@ export default function VideoPlayer({videoSrc, posterSrc, active = false, preloa
 	}
 
 	useEffect(() => {
+		// One-shot sticky transition: only fires while hasLoaded is still false, so
+		// the cascading-render concern the lint rule guards against doesn't apply.
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		if (preload || active) setHasLoaded(true)
-	}, [preload, active, setHasLoaded])
+	}, [preload, active])
+
 	// Auto-play when active, pause when active flips back to false.
 
 	useEffect(() => {
@@ -83,10 +91,10 @@ export default function VideoPlayer({videoSrc, posterSrc, active = false, preloa
 				{active && (
 					<div className={styles.playerControls}>
 						<SquareBtn size={32} className={styles.playerBtn} onClick={toggleSound} aria-label={isMuted ? "Unmute" : "Mute"}>
-							<img src={isMuted ? "/assets/icons/sound-off.svg" : "/assets/icons/sound-on.svg"} alt="" />
+							{isMuted ? <SoundOffIcon /> : <SoundOnIcon />}
 						</SquareBtn>
 						<SquareBtn size={32} className={styles.playerBtn} onClick={togglePlay} aria-label={isPlaying ? "Pause" : "Play"}>
-							<img src={isPlaying ? "/assets/icons/pause.svg" : "/assets/icons/play.svg"} alt="" />
+							{isPlaying ? <PauseIcon /> : <PlayIcon />}
 						</SquareBtn>
 					</div>
 				)}

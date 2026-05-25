@@ -26,14 +26,14 @@
 }
 
 .playerBtn {
-	border-radius: 50%;
-	transition: background-color 0.2s ease-in-out;
+	color: #F7F8F6;
+	transition: color 0.2s ease-in-out;
 
 	&:hover {
-		background-color: $cozey-gray;
+		color: $cozey-gray;
 	}
 
-	img {
+	svg {
 		width: 100%;
 		height: 100%;
 	}
