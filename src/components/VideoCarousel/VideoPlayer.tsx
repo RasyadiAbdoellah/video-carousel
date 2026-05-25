@@ -1,5 +1,6 @@
 import {useEffect, useRef, useState} from "react"
 import {useVideoSound} from "./contexts/VideoSoundContext.tsx"
+import "./style.scss"
 
 /**
  * The Video Slide renders the video, a play/pause button and a sound off/on button. It accepts an active flag and a preload flag, as well as the video and poster source.
