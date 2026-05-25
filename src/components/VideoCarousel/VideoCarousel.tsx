@@ -2,7 +2,6 @@ import Carousel from "src/components/Carousel/Carousel.tsx"
 import VideoSlot from "src/components/VideoCarousel/VideoSlot.tsx"
 import {VideoSoundProvider} from "./contexts/VideoSoundContext.tsx"
 import type {VideoSrc} from "src/types.ts"
-import "./style.scss"
 
 type VideoCarouselProps = {
 	slides: VideoSrc[]

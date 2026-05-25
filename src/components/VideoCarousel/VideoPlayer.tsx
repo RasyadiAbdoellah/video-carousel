@@ -1,6 +1,7 @@
 import {useEffect, useRef, useState} from "react"
 import {useVideoSound} from "./contexts/VideoSoundContext.tsx"
-import "./style.scss"
+import SquareBtn from "src/components/SquareBtn/SquareBtn.tsx"
+import styles from "./VideoCarousel.module.scss"
 
 /**
  * The Video Slide renders the video, a play/pause button and a sound off/on button. It accepts an active flag and a preload flag, as well as the video and poster source.
@@ -64,11 +65,11 @@ export default function VideoPlayer({videoSrc, posterSrc, active = false, preloa
 
 
 	return (
-			<div className="video-player">
+			<div className={styles.player}>
 				{hasLoaded ? (
 					<video
 						ref={videoRef}
-						className="video-player__media"
+						className={styles.media}
 						poster={posterSrc}
 						src={videoSrc}
 						playsInline
@@ -77,16 +78,16 @@ export default function VideoPlayer({videoSrc, posterSrc, active = false, preloa
 						preload="auto"
 					/>
 				) : (
-					<img className="video-player__poster" src={posterSrc} alt="" />
+					<img className={styles.poster} src={posterSrc} alt="" />
 				)}
 				{active && (
-					<div className="video-player__controls">
-						<button className="video-player__btn" onClick={toggleSound} aria-label={isMuted ? "Unmute" : "Mute"}>
+					<div className={styles.playerControls}>
+						<SquareBtn size={32} className={styles.playerBtn} onClick={toggleSound} aria-label={isMuted ? "Unmute" : "Mute"}>
 							<img src={isMuted ? "/assets/icons/sound-off.svg" : "/assets/icons/sound-on.svg"} alt="" />
-						</button>
-						<button className="video-player__btn" onClick={togglePlay} aria-label={isPlaying ? "Pause" : "Play"}>
+						</SquareBtn>
+						<SquareBtn size={32} className={styles.playerBtn} onClick={togglePlay} aria-label={isPlaying ? "Pause" : "Play"}>
 							<img src={isPlaying ? "/assets/icons/pause.svg" : "/assets/icons/play.svg"} alt="" />
-						</button>
+						</SquareBtn>
 					</div>
 				)}
 			</div>

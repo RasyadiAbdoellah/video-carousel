@@ -8,7 +8,7 @@ The active slide auto-plays its video and is the only slide that shows the video
 
 ## Architecture
 
-The carousel is split into a generic mechanism (`Carousel`) and a video-specific consumer (`VideoCarousel`).
+The carousel is split into a generic mechanism (`Carousel`) and a video-specific consumer (`VideoCarousel`). I chose to split the two to mirror the way I'd create them in a real-world project.
 
 ```
 src/
@@ -31,8 +31,8 @@ src/
 │       └── contexts/
 │           └── VideoSoundContext.tsx      # Global muted/unmuted state
 ├── styles/
-│   └── _variables.scss          # Shared SCSS variables
-├── reboot.scss                  # Global CSS reset
+│   ├── _variables.scss          # Shared SCSS variables
+│   └── reboot.scss              # Global CSS reset
 └── index.scss                   # Imports reboot
 ```
 
