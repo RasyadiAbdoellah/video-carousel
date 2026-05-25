@@ -86,17 +86,15 @@ The outer default export does NOT wrap in `VideoSoundProvider` — that's a vide
 
 ### Generic `CarouselSlot.tsx`
 
-Receives `{position, left, preload, item, SlotComponent}`. Renders:
+Receives `{position, left, preload, item, SlotComponent}`. Renders only the outer positioned element; the consumer's slot component is responsible for the full inner structure (including the `__inner` wrapper if it wants the active-state outline):
 
 ```tsx
 <div className={`carousel-slot ${isActive ? 'active' : ''} ${isLeftBuffer ? 'left-buffer' : ''}`} style={{left: `${left}px`}}>
-  <div className="carousel-slot__inner">
-    <SlotComponent item={item} isActive={isActive} position={position} preload={preload} />
-  </div>
+  <SlotComponent item={item} isActive={isActive} position={position} preload={preload} />
 </div>
 ```
 
-Note: the generic slot does NOT render `<p class="carousel-slot__text">`. If a consumer wants a caption under the slot, the consumer's slot component renders it.
+`.carousel-slot__inner` and `.carousel-slot__text` remain reserved BEM slots: their CSS lives in `Carousel/style.scss`, but the generic carousel does not render either element. Consumers opt in by rendering them. This preserves the current DOM where the caption sits OUTSIDE the outlined inner box (i.e. as a sibling of `__inner`, not a child).
 
 ### `VideoCarousel/VideoCarousel.tsx`
 
@@ -116,7 +114,9 @@ export default function VideoCarousel({slides, title}: {slides: VideoSrc[]; titl
 function VideoSlot({item, isActive, preload}: CarouselSlotProps<VideoSrc>) {
   return (
     <>
-      <VideoPlayer videoSrc={item.videoSrc} posterSrc={item.posterSrc} active={isActive} preload={preload} />
+      <div className="carousel-slot__inner">
+        <VideoPlayer videoSrc={item.videoSrc} posterSrc={item.posterSrc} active={isActive} preload={preload} />
+      </div>
       <p className="carousel-slot__text">{item.text}</p>
     </>
   )
