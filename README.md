@@ -13,27 +13,38 @@ The carousel is split into a generic mechanism (`Carousel`) and a video-specific
 ```
 src/
 ├── components/
-│   ├── Carousel/                # Generic, content-agnostic carousel
-│   │   ├── Carousel.tsx         # Generic over T; takes items + SlotComponent
-│   │   ├── CarouselSlot.tsx     # Positioned wrapper; delegates inner render to SlotComponent
-│   │   ├── style.scss           # .carousel, .carousel-track, .carousel-slot rules
+│   ├── Carousel/                         # Generic, content-agnostic carousel
+│   │   ├── Carousel.tsx                  # Generic over T; takes items + SlotComponent
+│   │   ├── CarouselSlot.tsx              # Positioned wrapper; delegates inner render to SlotComponent
+│   │   ├── Carousel.module.scss          # Scoped styles for the carousel
 │   │   ├── hooks/
-│   │   │   ├── useCarouselMeasure.ts      # Reads CSS vars + observes container resizes
-│   │   │   ├── useCarouselNavigation.ts   # Navigation state, lazy buffer, snap-back
-│   │   │   └── useTouchDrag.ts            # Pointer-driven drag with direction lock
+│   │   │   ├── useCarouselMeasure.ts            # Reads CSS vars + observes container resizes
+│   │   │   ├── useCarouselNavigation.ts         # Navigation state, lazy buffer, snap-back
+│   │   │   ├── useCarouselNavigation.test.ts
+│   │   │   └── useTouchDrag.ts                  # Pointer-driven drag with direction lock
 │   │   └── utils/
-│   │       └── velocityTracker.ts         # Trailing px/ms velocity for drag release
-│   └── VideoCarousel/           # Video-specific wrapper around Carousel
-│       ├── VideoCarousel.tsx    # Wraps Carousel in VideoSoundProvider
-│       ├── VideoSlot.tsx        # Renders VideoPlayer + caption for each item
-│       ├── VideoPlayer.tsx      # <video> with play/pause + sound controls
-│       ├── style.scss           # .video-player, .video-slot rules
-│       └── contexts/
-│           └── VideoSoundContext.tsx      # Global muted/unmuted state
+│   │       ├── velocityTracker.ts               # Trailing px/ms velocity for drag release
+│   │       └── velocityTracker.test.ts
+│   ├── VideoCarousel/                    # Video-specific wrapper around Carousel
+│   │   ├── VideoCarousel.tsx             # Wraps Carousel in VideoSoundProvider
+│   │   ├── VideoSlot.tsx                 # Renders VideoPlayer + caption for each item
+│   │   ├── VideoPlayer.tsx               # <video> with play/pause + sound controls
+│   │   ├── VideoCarousel.module.scss     # Scoped styles for the video player, frame, caption
+│   │   └── contexts/
+│   │       └── VideoSoundContext.tsx     # Global muted/unmuted state
+│   ├── SquareBtn/                        # Shared square-hitbox button with size prop
+│   │   ├── SquareBtn.tsx
+│   │   └── SquareBtn.module.scss
+│   └── icons/                            # Inline SVG icon components (fill="currentColor")
+│       ├── PlayIcon.tsx
+│       ├── PauseIcon.tsx
+│       ├── SoundOnIcon.tsx
+│       └── SoundOffIcon.tsx
 ├── styles/
-│   ├── _variables.scss          # Shared SCSS variables
-│   └── reboot.scss              # Global CSS reset
-└── index.scss                   # Imports reboot
+│   ├── _variables.scss                   # Shared SCSS tokens: colors + slide dimensions
+│   ├── _fonts.scss                       # @font-face declarations for Larsseit
+│   └── reboot.scss                       # Global CSS reset
+└── index.scss                            # Imports fonts + reboot
 ```
 
 ### Generic `Carousel`
@@ -67,7 +78,15 @@ A thin wrapper that supplies the video-specific concerns:
 </VideoSoundProvider>
 ```
 
-`VideoSlot` renders the `<video>` element inside a framed wrapper (`video-slot__frame`) that picks up an outline when its slot is active, plus an optional caption (`video-slot__caption`).
+`VideoSlot` renders the `<video>` element inside a framed wrapper that picks up an outline when its slot is active, plus an optional caption below. All class names are scoped via CSS Modules — the SCSS uses plain identifiers (`.frame`, `.frameActive`, `.caption`) which the bundler hashes per file.
+
+### Styling
+
+Component styles live next to the component as `*.module.scss` files and are imported as `styles` objects. The shared partials in `src/styles/` provide:
+
+- **`_variables.scss`** — color tokens (`$text-color`, `$cozey-blue`, `$cozey-gray`, …) and slide dimensions (`$slide-width`, `$slide-height`, `$slide-gap`). The slide-dimension SCSS tokens are interpolated into `--slide-width` / `--slide-gap` CSS custom properties on the carousel's track wrapper so `useCarouselMeasure` can read them at runtime.
+- **`_fonts.scss`** — `@font-face` declarations for the project font (see Typography below).
+- **`reboot.scss`** — minimal CSS reset.
 
 ## Scripts
 
@@ -81,8 +100,9 @@ A thin wrapper that supplies the video-specific concerns:
 
 ## Typography
 
-The project uses **Larsseit** (bundled under `public/assets/Fonts/Larsseit/`). The Figma wireframe uses a different typeface that we don't have access to, so Larsseit was chosen as the closest available match to the wireframe's visual character. Only the weights actually used (400, 700) are declared in `src/styles/_fonts.scss` to keep the initial payload small.
+The Figma wireframe is set in **Haffer XH**, which isn't part of the asset bundle for this demo. Of the fonts that *were* provided, **Larsseit** is the closest visual match, so it stands in as the project's typeface.
 
-## Not yet implemented
+The font files live under `public/assets/fonts/Larsseit/` and the `@font-face` declarations are in `src/styles/_fonts.scss`. Only the two weights the UI actually uses are declared:
 
-- Keyboard arrow-key navigation
+- `400` (Regular) — body copy and slide captions
+- `700` (Bold) — section titles
