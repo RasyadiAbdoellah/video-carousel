@@ -12,12 +12,11 @@ import {useVideoSound} from "./contexts/VideoSoundContext.tsx"
 type VideoSlideProps = {
 	videoSrc: string
 	posterSrc: string
-	text?: string
 	active?: boolean
 	preload?: boolean
 }
 
-export default function VideoSlide({videoSrc, posterSrc, text, active = false, preload = false}: VideoSlideProps) {
+export default function VideoPlayer({videoSrc, posterSrc, active = false, preload = false}: VideoSlideProps) {
 	const videoRef = useRef<HTMLVideoElement>(null)
 
 	// Once the video has been loaded (preload or active fired at least once),
@@ -64,13 +63,11 @@ export default function VideoSlide({videoSrc, posterSrc, text, active = false, p
 
 
 	return (
-		<>
-
-			<div className="video-slide">
+			<div className="video-player">
 				{hasLoaded ? (
 					<video
 						ref={videoRef}
-						className="video-slide__media"
+						className="video-player__media"
 						poster={posterSrc}
 						src={videoSrc}
 						playsInline
@@ -79,20 +76,18 @@ export default function VideoSlide({videoSrc, posterSrc, text, active = false, p
 						preload="auto"
 					/>
 				) : (
-					<img className="video-slide__poster" src={posterSrc} alt="" />
+					<img className="video-player__poster" src={posterSrc} alt="" />
 				)}
 				{active && (
-					<div className="video-slide__controls">
-						<button className="video-slide__btn" onClick={toggleSound} aria-label={isMuted ? "Unmute" : "Mute"}>
+					<div className="video-player__controls">
+						<button className="video-player__btn" onClick={toggleSound} aria-label={isMuted ? "Unmute" : "Mute"}>
 							<img src={isMuted ? "/assets/icons/sound-off.svg" : "/assets/icons/sound-on.svg"} alt="" />
 						</button>
-						<button className="video-slide__btn" onClick={togglePlay} aria-label={isPlaying ? "Pause" : "Play"}>
+						<button className="video-player__btn" onClick={togglePlay} aria-label={isPlaying ? "Pause" : "Play"}>
 							<img src={isPlaying ? "/assets/icons/pause.svg" : "/assets/icons/play.svg"} alt="" />
 						</button>
 					</div>
 				)}
 			</div>
-			{text && <p className="video-slide__text">{text}</p>}
-		</>
 	)
 }

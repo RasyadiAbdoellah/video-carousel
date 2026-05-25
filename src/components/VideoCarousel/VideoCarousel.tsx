@@ -1,5 +1,5 @@
 import {useRef} from "react"
-import Slot from "./Slot.tsx"
+import CarouselSlot from "src/components/VideoCarousel/CarouselSlot.tsx"
 import {useCarouselMeasure} from "./hooks/useCarouselMeasure.ts"
 import {useCarouselNavigation} from "./hooks/useCarouselNavigation.ts"
 import {useTouchDrag} from "./hooks/useTouchDrag.ts"
@@ -8,6 +8,7 @@ import type {VideoSrc} from "src/types.ts"
 
 type CarouselProps = {
 	slides: VideoSrc[]
+	title?: string
 }
 
 /**
@@ -35,8 +36,9 @@ type CarouselProps = {
  * - keyboard arrow-key navigation
  *
  * @param slides - Ordered list of `{posterSrc, videoSrc}` entries to display.
+ * @param title - Optional title to display above the carousel.
  */
-function VideoCarouselContent({slides}: CarouselProps) {
+function VideoCarouselContent({slides, title}: CarouselProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const {stride, visibleSlides} = useCarouselMeasure(containerRef)
 	const {pendingMove, dragDelta, animate, fade, slots, navigate, startDrag, updateDrag, endDrag, onTransitionEnd} =
@@ -48,32 +50,42 @@ function VideoCarouselContent({slides}: CarouselProps) {
 
 	return (
 		<div className="carousel">
-			<button className="carousel-control" onClick={() => navigate('left')}>
-				&lt;
-			</button>
-			<button className="carousel-control" onClick={() => navigate('right')}>
-				&gt;
-			</button>
 
-			<div className="carousel-container" ref={containerRef}>
-				<div className={trackClass}
-						 onTransitionEnd={onTransitionEnd}
-						 style={{
-							 transform: `translateX(${-pendingMove * stride + dragDelta}px)`,
-							 transition: animate ? undefined : 'none',
-						 }}
-				>
-					{slots.map(({position, slideIndex}) => (
-						<Slot
-							key={slideIndex}
-							position={position}
-							left={position * stride}
-							preload={Math.abs(position) <= 1}
-							slide={slides[slideIndex]}
-						/>
-					))}
+			<div className="carousel-container">
+				<div className="carousel-top">
+					<div className="carousel-top__title">
+						{title}
+					</div>
+					<div className="carousel-controls">
+						<button className="carousel-controls__btn" onClick={() => navigate('left')}>
+							<img src="/assets/icons/chevron-left.svg" alt="previous" />
+						</button>
+						<button className="carousel-controls__btn" onClick={() => navigate('right')}>
+							<img src="/assets/icons/chevron-right.svg" alt="next" />
+						</button>
+					</div>
 				</div>
-			</div>
+				<div className="carousel-track-wrapper" ref={containerRef}>
+					<div className={trackClass}
+							 onTransitionEnd={onTransitionEnd}
+							 style={{
+								 transform: `translateX(${-pendingMove * stride + dragDelta}px)`,
+								 transition: animate ? undefined : 'none',
+							 }}
+					>
+						{slots.map(({position, slideIndex}) => (
+							<CarouselSlot
+								key={slideIndex}
+								position={position}
+								left={position * stride}
+								preload={Math.abs(position) <= 1}
+								slide={slides[slideIndex]}
+							/>
+						))}
+					</div>
+				</div>
+
+				</div>
 		</div>
 	)
 }
