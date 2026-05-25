@@ -94,7 +94,7 @@ Receives `{position, left, preload, item, SlotComponent}`. Renders only the oute
 </div>
 ```
 
-`.carousel-slot__inner` and `.carousel-slot__text` remain reserved BEM slots: their CSS lives in `Carousel/style.scss`, but the generic carousel does not render either element. Consumers opt in by rendering them. This preserves the current DOM where the caption sits OUTSIDE the outlined inner box (i.e. as a sibling of `__inner`, not a child).
+Because the generic carousel does not render `.carousel-slot__inner` or `.carousel-slot__text`, their styles do NOT live in `Carousel/style.scss`. They move to `VideoCarousel/style.scss` alongside the consumer that renders them. This preserves the current DOM where the caption sits OUTSIDE the outlined inner box (sibling of `__inner`, not child).
 
 ### `VideoCarousel/VideoCarousel.tsx`
 
@@ -152,8 +152,9 @@ $cozey-gray: #D0CEC4;
 ```
 
 Contents moved from `src/index.scss`:
-- `.carousel` and all nested selectors (`-top`, `-container`, `-track-wrapper`, `-controls`, `-track`, `-slot` including `__inner` and `__text`).
-- `@keyframes slideFadeIn` and `@keyframes slideFadeOut`.
+- `.carousel` and nested selectors (`-top`, `-container`, `-track-wrapper`, `-controls`, `-track`).
+- `.carousel-slot` rule with `position`, `top`, `width: var(--slide-width)`, and the `&.left-buffer { opacity: 0; }` modifier. The `__inner` and `__text` element rules do NOT move here.
+- `@keyframes slideFadeIn` and `@keyframes slideFadeOut` (referenced by `.carousel-track.fade-in/out`).
 
 ### `src/components/VideoCarousel/style.scss` (new)
 
@@ -161,7 +162,33 @@ Contents moved from `src/index.scss`:
 @use 'src/styles/variables' as *;
 
 .video-player { /* ...moved verbatim from index.scss... */ }
+
+.carousel-slot {
+  &__inner {
+    border-radius: 20px;
+    overflow: hidden;
+    transition: border 0.2s ease-in-out, outline 0.2s ease-in-out;
+    box-sizing: border-box;
+    border: 2px solid transparent;
+    outline: 4px solid transparent;
+    outline-offset: 4px;
+    .carousel-slot.active & {
+      border: 2px solid $cozey-gray;
+      outline: 4px solid $cozey-blue;
+      outline-offset: 4px;
+    }
+  }
+  &__text {
+    margin-top: 12px;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+    color: $text-color;
+  }
+}
 ```
+
+Note: the `.active &` selector is rewritten as `.carousel-slot.active &` because the parent `.carousel-slot` selector no longer wraps `__inner` in this file. Behavior is identical — the outline appears on the active slot's inner box.
 
 ### `src/index.scss` (after)
 
